@@ -1,0 +1,22 @@
+{
+  "name": "awspm",
+  "version": "1.0.0",
+  "description": "Project manager for AWS services",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ascending-llc/project-manager.git"
+  },
+  "author": "nathancfoster",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ascending-llc/project-manager/issues"
+  },
+  "homepage": "https://github.com/ascending-llc/project-manager#readme",
+  "dependencies": {
+    "shelljs": "^0.8.5"
+  }
+}

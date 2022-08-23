@@ -1,3 +1,3 @@
-# Basic Setup for Python SAM App
+# AWS Project Manager
 
-> Meant for use with custom shell script CLEANUP.sh
+Project manager used for AWS services, which contains frameworks used by ascending
