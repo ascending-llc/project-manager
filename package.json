@@ -2,7 +2,6 @@
   "name": "awspm",
   "version": "1.0.0",
   "description": "Project manager for AWS services",
-  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -18,5 +17,9 @@
   "homepage": "https://github.com/ascending-llc/project-manager#readme",
   "dependencies": {
     "shelljs": "^0.8.5"
-  }
+  },
+  "bin": {
+    "pm": "./bin/index.js"
+  },
+  "main": "bin/index.js"
 }
