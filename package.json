@@ -16,6 +16,7 @@
   },
   "homepage": "https://github.com/ascending-llc/project-manager#readme",
   "dependencies": {
+    "commander": "^9.4.0",
     "shelljs": "^0.8.5"
   },
   "bin": {
