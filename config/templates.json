@@ -1,0 +1,19 @@
+{
+    "templates": [
+        {
+            "type": "code",
+            "link": "",
+            "name": "React App"
+        },
+        {
+            "type": "cloud",
+            "link": "",
+            "name": "Cloudformation Basics"
+        },
+        {
+            "type": "code",
+            "link": "",
+            "name": "Python SAM App"
+        }
+    ]
+}
