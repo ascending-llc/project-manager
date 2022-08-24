@@ -125,7 +125,7 @@ const init = async () => {
     })
 
     let names = res.data.map(e => e.name);
-    // shell.exec("find . -delete")
+    shell.exec("find . -delete")
     inquirer.prompt([
         {
             type: "list",
