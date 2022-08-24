@@ -101,7 +101,7 @@ const config = () => {
     })
 }
 
-const init = () => {
+const init = async () => {
     if (!fs.existsSync(homedir() + "/.awspm")) {
         shell.echo("Please run pm config to set up configuration files");
         shell.exit();
@@ -223,7 +223,7 @@ const init = () => {
                 }
             }
         } else {
-            let clone_url = res.data.filter(repo => repo.name === e.name).clone_url;
+            let clone_url = res.data.filter(repo => repo.name === e.repo)[0].clone_url;
             shell.exec(`git clone ${clone_url}`);
         }
     })
