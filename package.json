@@ -16,6 +16,7 @@
   },
   "homepage": "https://github.com/ascending-llc/project-manager#readme",
   "dependencies": {
+    "axios": "^0.27.2",
     "commander": "^9.4.0",
     "inquirer": "^9.1.0",
     "shelljs": "^0.8.5"

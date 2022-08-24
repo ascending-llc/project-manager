@@ -9,7 +9,7 @@ program.version(version).name("pm").description("Package manager for AWS service
 
 program.command("add").description("Add a new GitHub template repo.").alias("a").action(commands.add);
 
-program.command("init").description("Create a new Repo and Project").alias("i").action(commands.run);
+program.command("init").description("Create a new Repo and Project").alias("i").action(commands.init);
 
 program.command("config").description("Set up GitHub token in config").alias("c").action(commands.config);
 
