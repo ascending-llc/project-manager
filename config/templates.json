@@ -2,17 +2,17 @@
     "templates": [
         {
             "type": "code",
-            "link": "",
+            "link": "https://api.github.com/repos/NathanCFoster/react-app/generate",
             "name": "React App"
         },
         {
             "type": "cloud",
-            "link": "",
+            "link": "https://github.com/NathanCFoster/cft.git",
             "name": "Cloudformation Basics"
         },
         {
             "type": "code",
-            "link": "",
+            "link": "https://api.github.com/repos/NathanCFoster/python-sam/generate",
             "name": "Python SAM App"
         }
     ]
