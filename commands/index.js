@@ -5,68 +5,98 @@ import shell from "shelljs"
 import templates from "../config/templates.json" assert { type: "json" };
 import axios from "axios";
 
-const add = () => {
+const add = (opts) => {
     if (!fs.existsSync(homedir() + "/.awspm")) {
         shell.echo("Please run pm config to set up configuration files");
         shell.exit();
     }
-    let data = {
-        type: "",
-        link: "",
-        name: ""
-    }
-    inquirer.prompt([
-        {
-            type: "list",
-            message: "What is the type of the template",
-            name: "type",
-            choices: [
-                "Cloudformation template",
-                "Code"
-            ],
-        },
-        {
-            type: "input",
-            message: "What is the name of the template",
-            name: "name",
-        },
-        {
-            type: "input",
-            message: "What is the git clone link for this template",
-            name: "link",
-            when: (e) => e.type === "Cloudformation template"
-        },
-        {
-            type: "input",
-            message: "Who is the owner of the template repo?",
-            name: "owner",
-            when: (e) => e.type === "Code"
-        },
-        {
-            type: "input",
-            message: "What is the repo name?",
-            name: "repo",
-            when: (e) => e.type === "Code"
-        }
-    ]).then(element => {
-        const { type, name } = element
-        fs.readFile(homedir() + "/.awspm/templates.json", (e, d) => {
-            if (e) {
-                console.log(e)
-            } else {
-                let data = JSON.parse(d);
-                let link = type === "Code" ? `https://api.github.com/repos/${element.owner}/${element.repo}/generate` : element.link
-                let new_data = {
-                    type: type === "Code" ? "code" : "cloud" ,
-                    name,
-                    link
-                }
-                data["templates"].push(new_data);
-                fs.writeFileSync(homedir() + "/.awspm/templates.json", JSON.stringify(data));
-                shell.echo("Successfully pushed " + element.name + " to templates");
+    if (!opts.template) {
+        let data = fs.readFileSync(homedir() + "/.awspm/templates.json");
+        let templates = JSON.parse(data);
+        let cloud_templates = templates["templates"].filter(e => e.type === "cloud");
+
+        inquirer.prompt([
+            {
+                type: "list",
+                message: "Would you like to unpack this template in the current directory?",
+                name: "is_unpacked",
+                choices: [
+                    "Yes",
+                    "No"
+                ]
+            },
+            {
+                type: "list",
+                message: "Which template would you like to add?",
+                name: "template",
+                choices: cloud_templates
             }
-        })
-    }).catch(e => console.log(e))
+        ]).then(e => {
+            const { template, is_unpacked } = e;
+
+            let link = cloud_templates.find(e => e.name === template).link;
+            let git_name = (link.split("/")[4]).split(".")[0];
+            shell.echo(`Cloning template into ${is_unpacked === "Yes" ? "current directory" : git_name}...`);
+            shell.exec(`git clone ${link} -q`);
+            if (is_unpacked === "Yes") shell.exec(`mv cft/* ./`)
+            shell.exec(`rm -rf ${git_name}/.git`);
+            shell.exit();
+        }).catch(e => console.log(e));
+    } else {
+        inquirer.prompt([
+            {
+                type: "list",
+                message: "What is the type of the template?",
+                name: "type",
+                choices: [
+                    "Git clone",
+                    "Git template"
+                ],
+            },
+            {
+                type: "input",
+                message: "What is the name of the template",
+                name: "name",
+            },
+            {
+                type: "input",
+                message: "What is the git clone link for this template",
+                name: "link",
+                when: (e) => e.type === "Git clone"
+            },
+            {
+                type: "input",
+                message: "Who is the owner of the template repo?",
+                name: "owner",
+                when: (e) => e.type === "Git template"
+            },
+            {
+                type: "input",
+                message: "What is the repo name?",
+                name: "repo",
+                when: (e) => e.type === "Git template"
+            }
+        ]).then(element => {
+            const { type, name } = element
+            fs.readFile(homedir() + "/.awspm/templates.json", (e, d) => {
+                if (e) {
+                    console.log(e)
+                } else {
+                    let data = JSON.parse(d);
+                    let link = type === "Git template" ? `https://api.github.com/repos/${element.owner}/${element.repo}/generate` : element.link
+                    let new_data = {
+                        type: type === "Git template" ? "code" : "cloud",
+                        name,
+                        link
+                    }
+                    data["templates"].push(new_data);
+                    fs.writeFileSync(homedir() + "/.awspm/templates.json", JSON.stringify(data));
+                    shell.echo("Successfully pushed " + element.name + " to templates");
+                }
+            })
+        }).catch(e => console.log(e))
+    }
+
 }
 
 const config = () => {
@@ -112,13 +142,17 @@ const init = async () => {
             shell.echo("Please run pm config to set up configuration files");
             shell.exit();
         }
+        shell.echo(`Deleting old files`)
+        shell.exec("find . -delete")
+
         let data = fs.readFileSync(homedir() + "/.awspm/templates.json");
         let templates = JSON.parse(data);
         let cloud_templates = templates["templates"].filter(e => e.type === "cloud");
         let code_templates = templates["templates"].filter(e => e.type === "code");
         let userdata = fs.readFileSync(homedir() + "/.awspm/userconfig.json");
         let userconfig = JSON.parse(userdata);
-    
+
+        shell.echo('Fetching repos');
         let repo_link = `https://api.github.com/${userconfig.is_org === "Yes" ? `orgs/${userconfig.org}` : "user"}/repos`
         let res = await axios.get(repo_link, {
             headers: {
@@ -129,9 +163,8 @@ const init = async () => {
                 sort: "pushed"
             }
         })
-    
+
         let names = res.data.map(e => e.name);
-        shell.exec("find . -delete")
         inquirer.prompt([
             {
                 type: "list",
@@ -148,7 +181,7 @@ const init = async () => {
                     "None",
                     ...cloud_templates.map(e => e.name)
                 ],
-                message: "Would you like any Cloud templates?",
+                message: "Would you like any Git boilerplate?",
                 name: "cloud_templates",
                 when: (e) => e.choice1 === "New"
             },
@@ -158,7 +191,7 @@ const init = async () => {
                     "Empty",
                     ...code_templates.map(e => e.name)
                 ],
-                message: "What code template would you like?",
+                message: "What Git template would you like?",
                 name: "code_template",
                 when: (e) => e.choice1 === "New"
             },
@@ -211,20 +244,20 @@ const init = async () => {
                     }
                 })
                 let repo_url = res.data.clone_url;
-    
+
                 shell.echo("Creating and cloning repo...")
-    
+
                 shell.exec("sleep 3")
-    
+
                 shell.exec(`git clone ${repo_url} . -q`)
-    
+
                 if (e.cloud_templates[0] !== "None") {
                     for (const template in e.cloud_templates) {
                         let template_name = e.cloud_templates[template];
                         let cur_template = cloud_templates.find(e => e.name === template_name);
-                        
+
                         shell.echo(`Cloning ${template}`);
-    
+
                         shell.exec(`git clone ${cur_template.link} . -s`)
                     }
                 }
@@ -232,7 +265,7 @@ const init = async () => {
                 let clone_url = res.data.filter(repo => repo.name === e.repo)[0].clone_url;
                 shell.exec(`git clone ${clone_url} . -q`);
             }
-        })       
+        })
     } catch (error) {
         console.log(error);
     }

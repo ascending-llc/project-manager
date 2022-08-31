@@ -37,13 +37,17 @@ pm config
 
 ### **Adding Templates**
 
-Run below command and follow the steps: 
+> Current project
 
 ```bash
 pm add
 ```
 
-\* For Repo generation templates (aka Code templates) you will need access to the template, as well as the owner and the template name.
+> Config file
+
+```bash
+pm add -t
+```
 
 ### **Using the CLI**
 
@@ -53,4 +57,4 @@ Run below command to either start a new repo or change repos to an existing one.
 pm i
 ```
 
-\* Running below command will delete all files in current directory 
+\* Running above command will delete all files in current directory 
