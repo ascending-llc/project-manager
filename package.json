@@ -1,6 +1,6 @@
 {
   "name": "awspm",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Project manager for AWS services",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -19,7 +19,9 @@
     "axios": "^0.27.2",
     "commander": "^9.4.0",
     "inquirer": "^9.1.0",
-    "shelljs": "^0.8.5"
+    "inquirer-file-tree-selection-prompt": "^2.0.4",
+    "shelljs": "^0.8.5",
+    "yaml": "^2.1.1"
   },
   "bin": {
     "pm": "./bin/index.js"

@@ -1,0 +1,38 @@
+{
+  "pipeline": {
+    "version": "0.2",
+    "phases": {
+      "install": {
+        "runtime-versions": {
+          "nodejs": 12
+        },
+        "commands": ["n 17"]
+      },
+      "pre_build": {
+        "commands": ["n 17", "npm install", "npm i -g env-cmd"]
+      },
+      "build": {
+        "commands": ["npm run build:${env}"]
+      },
+      "post_build": {
+        "commands": ["aws s3 cp build s3://${s3}/${env}/build --recursive"]
+      }
+    },
+    "Artifacts": {
+      "files": ["**/*"],
+      "base-directory": "build"
+    }
+  },
+  "invalidation": {
+    "version": "0.2",
+    "phases": {
+      "phases": {
+        "build": {
+          "commands": [
+            "aws cloudfront create-invalidation --distribution-id ${CF} --paths '/*'"
+          ]
+        }
+      }
+    }
+  }
+}

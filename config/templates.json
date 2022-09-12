@@ -1,19 +1,73 @@
 {
-    "templates": [
-        {
-            "type": "code",
-            "link": "https://api.github.com/repos/NathanCFoster/react-app/generate",
-            "name": "React App"
-        },
-        {
-            "type": "cloud",
-            "link": "https://github.com/NathanCFoster/cft.git",
-            "name": "Cloudformation Basics"
-        },
-        {
-            "type": "code",
-            "link": "https://api.github.com/repos/NathanCFoster/python-sam/generate",
-            "name": "Python SAM App"
-        }
-    ]
+  "templates": [
+    {
+      "type": "code",
+      "link": "https://api.github.com/repos/NathanCFoster/react-app/generate",
+      "name": "React App"
+    },
+    {
+      "type": "cloud",
+      "link": "https://github.com/NathanCFoster/cft.git",
+      "name": "Cloudformation Basics",
+      "boilerplate": {
+        "variables": "({})",
+        "questions": [
+          {
+            "type": "input",
+            "title": "What is the S3 path where these templates are stored?",
+            "line": 9,
+            "file": "root.yaml",
+            "name": "s3_templates"
+          },
+          {
+            "type": "input",
+            "title": "What is the S3 path where you would like everything stored?",
+            "line": "31,36",
+            "file": "root.yaml",
+            "name": "s3_path"
+          },
+          {
+            "type": "input",
+            "title": "What is the Project Name?",
+            "line": 14,
+            "file": "root.yaml",
+            "name": "project_name"
+          },
+          {
+            "type": "input",
+            "title": "What is the name of the secuirty stack? (needs CodeBuildRole, CodePipeLineRole and LambdaRole)",
+            "line": 26,
+            "file": "root.yaml",
+            "name": "security_stack"
+          },
+          {
+            "type": "git:repos",
+            "title": "What is the GitHub Repository",
+            "line": 66,
+            "file": "root.yaml",
+            "name": "git_repo"
+          },
+          {
+            "type": "password",
+            "title": "What is the OAuth Token To GitHub",
+            "line": 41,
+            "file": "root.yaml",
+            "name": "oauth_token"
+          },
+          {
+            "type": "file>yaml",
+            "title": "Please choose the data for building and deploying",
+            "file": "pipeline.yaml",
+            "name": "file",
+            "line": 67
+          }
+        ]
+      }
+    },
+    {
+      "type": "code",
+      "link": "https://api.github.com/repos/NathanCFoster/python-sam/generate",
+      "name": "Python SAM App"
+    }
+  ]
 }

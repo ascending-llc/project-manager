@@ -7,13 +7,15 @@ const version = json.version;
 
 program.version(version).name("pm").description("Package manager for AWS services with frameworks used by ASCENDING");
 
-program.command("add").description("Add a new GitHub template repo.").alias("a").option("-t, --template").action(function () {
+program.command("add").description("Add a new GitHub template repo.").alias("a").option("-t, --template").option("-f, --file").action(function () {
     commands.add(this.opts());
 });
 
 program.command("init").description("Create a new Repo and Project").alias("i").action(commands.init);
 
-program.command("config").description("Set up GitHub token in config").alias("c").action(commands.config);
+program.command("config").description("Configure the project manager for you.").alias("c").option("-a, --add").option("-p, --profile").option("-r, --reset").action(function () {
+    commands.config(this.opts())
+});
 
 program.parse(process.argv);
 

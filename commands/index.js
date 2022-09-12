@@ -3,14 +3,19 @@ import inquirer from "inquirer";
 import { homedir } from "os";
 import shell from "shelljs"
 import templates from "../config/templates.json" assert { type: "json" };
+import json_data from "../config/json_data.json" assert { type: "json" };
 import axios from "axios";
+import inquirerFileTreeSelection from "inquirer-file-tree-selection-prompt";
+import { stringify } from "yaml";
+
+inquirer.registerPrompt('file-tree-selection', inquirerFileTreeSelection);
 
 const add = (opts) => {
     if (!fs.existsSync(homedir() + "/.awspm")) {
         shell.echo("Please run pm config to set up configuration files");
         shell.exit();
     }
-    if (!opts.template) {
+    if (!opts.template && !opts.file) {
         let data = fs.readFileSync(homedir() + "/.awspm/templates.json");
         let templates = JSON.parse(data);
         let cloud_templates = templates["templates"].filter(e => e.type === "cloud");
@@ -31,26 +36,152 @@ const add = (opts) => {
                 name: "template",
                 choices: cloud_templates
             }
-        ]).then(e => {
+        ]).then(async e => {
             const { template, is_unpacked } = e;
 
-            let link = cloud_templates.find(e => e.name === template).link;
-            let git_name = (link.split("/")[4]).split(".")[0];
-            shell.echo(`Cloning template into ${is_unpacked === "Yes" ? "current directory" : git_name}...`);
-            shell.exec(`git clone ${link} -q`);
-            if (is_unpacked === "Yes") shell.exec(`mv cft/* ./`)
-            shell.exec(`rm -rf ${git_name}/.git`);
-            shell.exit();
+            let cur_template = cloud_templates.find(e => e.name === template);
+
+            if (cur_template.boilerplate) {
+
+                // map questions to correct format
+                const questions = await (cur_template.boilerplate.questions.map(async e => {
+                    if (e.type.includes("file")) {
+                        let data = JSON.parse(fs.readFileSync(`${homedir()}/.awspm/json_data.json`));
+                        return {
+                            type: "list",
+                            message: e.title,
+                            name: e.name,
+                            choices: Object.keys(data)
+                        }
+                    }
+
+                    // git types
+                    if (e.type.includes("git")) {
+                        let userdata = fs.readFileSync(homedir() + "/.awspm/userconfig.json");
+                        let userconfig = JSON.parse(userdata);
+
+                        shell.echo('Fetching git data');
+                        let link;
+                        // determine data type
+                        // if (e.type.includes("repos")) {
+                        link = `https://api.github.com/${userconfig.is_org === "Yes" ? `orgs/${userconfig.org}` : "user"}/repos`
+                        // }
+                        let res = await axios.get(link, {
+                            headers: {
+                                Accept: "application/vnd.github+json",
+                                Authorization: "token " + userconfig.password
+                            },
+                            params: {
+                                sort: "pushed"
+                            }
+                        });
+
+                        return {
+                            type: "list",
+                            message: e.title,
+                            name: e.name,
+                            choices: res.data.map(e => e.name)
+                        }
+                    }
+
+                    // basic types
+                    return {
+                        type: e.type,
+                        message: e.title,
+                        name: e.name,
+                    }
+                }))
+
+                let question_res = await Promise.all(questions);
+                inquirer.prompt(question_res).then(a => {
+                    const keys = Object.keys(a);
+
+                    shell.echo("Cloning template");
+                    let git_name = (cur_template.link.split("/")[4]).split(".")[0];
+                    shell.exec(`git clone ${cur_template.link} -q`)
+                    shell.exec(`rm -rf ${git_name}/.git`);
+
+                    shell.echo("Changing boilerplate");
+                    const switch_out = cur_template.boilerplate.variables;
+                    const files = {};
+
+                    // update boilerplate code internally
+                    for (const key of keys) {
+                        const prompt = cur_template.boilerplate.questions.find(e => e.name === key);
+
+                        // get array of lines
+                        let file;
+                        if (files[prompt.file]) {
+                            file = files[prompt.file];
+                        } else {
+                            let res = fs.readFileSync(`${git_name}/${prompt.file}`, "utf-8");
+                            file = res.split(/\r?\n/);
+                            files[prompt.file] = file
+                        }
+
+                        // get lines to swap out code
+                        let lines = typeof prompt.line === "string" ? prompt.line.split(",") : [prompt.line];
+
+                        // replace strings with new boilerplate
+                        for (const line of lines) {
+                            let cur_line = file[line - 1];
+                            let data;
+
+                            if (prompt.type.includes("file")) {
+                                let json_data = JSON.parse(fs.readFileSync(`${homedir()}/.awspm/json_data.json`));
+
+                                if (prompt.type === "file>yaml") {
+                                    // dont forget to reproduce indentation!!
+                                    let indentation = cur_line.replace(switch_out, "");
+                                    let res = stringify(json_data[a[key]]);
+                                    data = res.replaceAll("\n", `\n${indentation}`);
+                                } else {
+                                    data = json_data[a[key]]
+                                }
+
+                            } else {
+                                data = a[key];
+                            }
+
+                            cur_line = cur_line.replace(switch_out, data);
+
+                            file[line - 1] = cur_line;
+                        }
+                    }
+
+                    // write data to files
+                    for (const key in files) {
+                        let file = files[key];
+
+                        let data = file.join("\n")
+
+                        fs.writeFileSync(`${git_name}/${key}`, data)
+                    }
+
+                    shell.echo("Imported new boilerplate code");
+
+                    if (is_unpacked === "Yes") shell.exec(`mv ${git_name}/* ./`)
+                }).catch(e => console.log(e));
+            }
+
+            // let link = cloud_templates.find(e => e.name === template).link;
+            // let git_name = (link.split("/")[4]).split(".")[0];
+            // shell.echo(`Cloning template into ${is_unpacked === "Yes" ? "current directory" : git_name}...`);
+            // shell.exec(`git clone ${link} -q`);
+            // if (is_unpacked === "Yes") shell.exec(`mv cft/* ./`)
+            // shell.exec(`rm -rf ${git_name}/.git`);
+            // shell.exit();
         }).catch(e => console.log(e));
-    } else {
+    } else if (opts.template && !opts.file) {
         inquirer.prompt([
             {
                 type: "list",
                 message: "What is the type of the template?",
                 name: "type",
                 choices: [
-                    "Git clone",
-                    "Git template"
+                    "Git Clone",
+                    "Git Template",
+                    "Git Boilerplate"
                 ],
             },
             {
@@ -62,32 +193,49 @@ const add = (opts) => {
                 type: "input",
                 message: "What is the git clone link for this template",
                 name: "link",
-                when: (e) => e.type === "Git clone"
+                when: (e) => e.type === "Git Clone" || e.type === "Git Boilerplate"
             },
             {
                 type: "input",
                 message: "Who is the owner of the template repo?",
                 name: "owner",
-                when: (e) => e.type === "Git template"
+                when: (e) => e.type === "Git Template"
             },
             {
                 type: "input",
                 message: "What is the repo name?",
                 name: "repo",
-                when: (e) => e.type === "Git template"
+                when: (e) => e.type === "Git Template"
+            },
+            {
+                type: "file-tree-selection",
+                message: "Where is the JSON file for the boilerplate?",
+                name: "file",
+                when: (e) => e.type === "Git Boilerplate"
             }
         ]).then(element => {
-            const { type, name } = element
+            const { type, name, file } = element
             fs.readFile(homedir() + "/.awspm/templates.json", (e, d) => {
                 if (e) {
                     console.log(e)
                 } else {
-                    let data = JSON.parse(d);
-                    let link = type === "Git template" ? `https://api.github.com/repos/${element.owner}/${element.repo}/generate` : element.link
-                    let new_data = {
-                        type: type === "Git template" ? "code" : "cloud",
-                        name,
-                        link
+                        let data = JSON.parse(d);
+                    let link = type === "Git Template" ? `https://api.github.com/repos/${element.owner}/${element.repo}/generate` : element.link
+                    let new_data;
+                    if (file) {
+                        let questions_data = JSON.parse(fs.readFileSync(file));
+                        new_data = {
+                            type: type === "Git Template" ? "code" : "cloud",
+                            name,
+                            link,
+                            boilerplate: questions_data
+                        }
+                    } else {
+                        new_data = {
+                            type: type === "Git Template" ? "code" : "cloud",
+                            name,
+                            link
+                        }
                     }
                     data["templates"].push(new_data);
                     fs.writeFileSync(homedir() + "/.awspm/templates.json", JSON.stringify(data));
@@ -95,45 +243,123 @@ const add = (opts) => {
                 }
             })
         }).catch(e => console.log(e))
+    } else if (opts.file && !opts.template) {
+        inquirer.prompt([
+            {
+                type: "file-tree-selection",
+                name: "file",
+                message: "Please select the json data to import"
+            },
+            {
+                type: "input",
+                name: "name",
+                message: "What is the name of this json data?"
+            }
+        ]).then(e => {
+            let json_res = fs.readFileSync(homedir() + "/.awspm/json_data.json");
+            let data_res = fs.readFileSync(e.file);
+            let json_data = JSON.parse(json_res);
+            let data = JSON.parse(data_res);
+            json_data[e.name] = data;
+            fs.writeFileSync(`${homedir()}/.awspm/json_data.json`, JSON.stringify(json_data));
+        }).catch(e => console.log(e))
+    } else {
+        shell.echo("[ERROR] Found two options...")
     }
 
 }
 
-const config = () => {
-    shell.echo("The GitHub token must have Repo access as well as Hook access");
-    inquirer.prompt([
-        {
-            type: "password",
-            message: "Please enter your token",
-            name: "password",
-            mask: "*"
-        },
-        {
-            type: "list",
-            message: "Are you working under an organization?",
-            name: "is_org",
-            choices: [
-                "Yes",
-                "No"
-            ]
-        },
-        {
-            type: "input",
-            message: "What is name of the GitHub Org",
-            name: "org",
-            when: (e) => e.is_org === "Yes"
-        }
-    ]).then(e => {
-        if (!fs.existsSync(homedir() + "/.awspm")) {
-            fs.mkdirSync(homedir() + "/.awspm");
-            fs.writeFileSync(homedir() + "/.awspm/userconfig.json", JSON.stringify(e))
-            fs.writeFileSync(homedir() + "/.awspm/templates.json", JSON.stringify(templates))
-            shell.echo("Successfully imported Config Files")
+const config = (opts) => {
+    if (opts.profile) {
+        let data = JSON.parse(fs.readFileSync(`${homedir()}/.awspm/userconfig.json`));
+        if (data.profiles) {
+            inquirer.prompt([
+                {
+                    type: "list",
+                    message: "Which profile would you like to use?",
+                    name: "profile_name",
+                    choices: Object.keys(data.profiles)
+                }
+            ]).then(e => {
+                const { profile_name } = e;
+                const profile = data.profiles[profile_name];
+
+                data.profiles[data.profile] = {
+                    password: data.password,
+                    is_org: data.is_org,
+                    org: data.org,
+                    profile: data.profile
+                }
+
+                data.password = profile.password;
+                data.is_org = profile.is_org;
+                data.org = profile.org;
+                data.profile = profile.profile;
+
+                fs.writeFileSync(`${homedir()}/.awspm/userconfig.json`, JSON.stringify(data));
+                shell.echo(`Switched profile to ${profile_name}`);
+            }).catch(e => console.log(e));
         } else {
-            fs.writeFileSync(homedir() + "/.awspm/userconfig.json", JSON.stringify(e))
-            shell.echo("Successfully updated User Config")
+            shell.echo("Must have at least one extra profile.");
         }
-    })
+    } else {
+        shell.echo("The GitHub token must have Repo access as well as Hook access");
+        inquirer.prompt([
+            {
+                type: "password",
+                message: "Please enter your token",
+                name: "password",
+                mask: "*"
+            },
+            {
+                type: "list",
+                message: "Are you working under an organization?",
+                name: "is_org",
+                choices: [
+                    "Yes",
+                    "No"
+                ]
+            },
+            {
+                type: "input",
+                message: "What is name of the GitHub Org",
+                name: "org",
+                when: (e) => e.is_org === "Yes"
+            },
+            {
+                type: "input",
+                message: "What is the name of this profile?",
+                name: "profile"
+            }
+        ]).then(e => {
+            if (opts.add) {
+                const { profile } = e;
+                let data = JSON.parse(fs.readFileSync(`${homedir()}/.awspm/userconfig.json`));
+                if (data.profiles) {
+                    data["profiles"][`${profile}`] = e;
+                } else {
+                    data.profiles = {};
+                    data.profiles[`${profile}`] = e;
+                }
+                fs.writeFileSync(`${homedir()}/.awspm/userconfig.json`, JSON.stringify(data));
+                shell.echo(`Profile: ${profile} imported to userconfig`);
+            } else {
+                if (!fs.existsSync(homedir() + "/.awspm") || opts.reset) {
+                    if (opts.reset) {
+                        fs.rmdirSync(`${homedir()}/.awspm`, { recursive: true, force: true });
+                    }
+                    fs.mkdirSync(homedir() + "/.awspm");
+                    fs.writeFileSync(homedir() + "/.awspm/userconfig.json", JSON.stringify(e))
+                    fs.writeFileSync(homedir() + "/.awspm/templates.json", JSON.stringify(templates))
+                    fs.writeFileSync(homedir() + "/.awspm/json_data.json", JSON.stringify(json_data))
+                    shell.echo("Successfully imported Config Files")
+                } else {
+                    fs.writeFileSync(homedir() + "/.awspm/userconfig.json", JSON.stringify(e))
+                    shell.echo("Successfully updated User Config")
+                }
+            }
+        })
+    }
 }
 
 const init = async () => {
