@@ -162,15 +162,15 @@ const add = (opts) => {
 
                     if (is_unpacked === "Yes") shell.exec(`mv ${git_name}/* ./`)
                 }).catch(e => console.log(e));
+            } else {
+                let link = cloud_templates.find(e => e.name === template).link;
+                let git_name = (link.split("/")[4]).split(".")[0];
+                shell.echo(`Cloning template into ${is_unpacked === "Yes" ? "current directory" : git_name}...`);
+                shell.exec(`git clone ${link} -q`);
+                if (is_unpacked === "Yes") shell.exec(`mv cft/* ./`)
+                shell.exec(`rm -rf ${git_name}/.git`);
+                shell.exit();
             }
-
-            // let link = cloud_templates.find(e => e.name === template).link;
-            // let git_name = (link.split("/")[4]).split(".")[0];
-            // shell.echo(`Cloning template into ${is_unpacked === "Yes" ? "current directory" : git_name}...`);
-            // shell.exec(`git clone ${link} -q`);
-            // if (is_unpacked === "Yes") shell.exec(`mv cft/* ./`)
-            // shell.exec(`rm -rf ${git_name}/.git`);
-            // shell.exit();
         }).catch(e => console.log(e));
     } else if (opts.template && !opts.file) {
         inquirer.prompt([
@@ -219,7 +219,7 @@ const add = (opts) => {
                 if (e) {
                     console.log(e)
                 } else {
-                        let data = JSON.parse(d);
+                    let data = JSON.parse(d);
                     let link = type === "Git Template" ? `https://api.github.com/repos/${element.owner}/${element.repo}/generate` : element.link
                     let new_data;
                     if (file) {
