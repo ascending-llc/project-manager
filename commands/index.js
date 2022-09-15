@@ -499,13 +499,13 @@ const init = async () => {
                             Authorization: "token " + userconfig.password
                         }
                     });
-                    let res = data.data.map(e => e.name);
+                    let name_map = data.data.map(e => e.name);
 
                     inquirer.prompt([
                         {
                             type: "list",
                             message: "Please choose a branch",
-                            choices: res,
+                            choices: name_map,
                             name: "branch"
                         }
                     ]).then(({ branch }) => {
