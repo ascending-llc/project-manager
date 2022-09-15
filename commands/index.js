@@ -369,7 +369,7 @@ const init = async () => {
             shell.exit();
         }
         shell.echo(`Deleting old files`)
-        // shell.exec("find . -delete")
+        shell.exec("find . -delete")
 
         let data = fs.readFileSync(homedir() + "/.awspm/templates.json");
         let templates = JSON.parse(data);
