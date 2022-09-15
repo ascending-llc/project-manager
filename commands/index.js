@@ -369,7 +369,7 @@ const init = async () => {
             shell.exit();
         }
         shell.echo(`Deleting old files`)
-        shell.exec("find . -delete")
+        // shell.exec("find . -delete")
 
         let data = fs.readFileSync(homedir() + "/.awspm/templates.json");
         let templates = JSON.parse(data);
@@ -488,8 +488,34 @@ const init = async () => {
                     }
                 }
             } else {
-                let clone_url = res.data.filter(repo => repo.name === e.repo)[0].clone_url;
-                shell.exec(`git clone ${clone_url} . -q`);
+                let repo = res.data.find(repo => repo.name === e.repo);
+                let branches_url = repo.branches_url.split("{")[0]
+                console.log(branches_url);
+                shell.echo("Fetching branches")
+                try {
+                    let data = await axios.get(branches_url, {
+                        headers: {
+                            Accept: "application/vnd.github+json",
+                            Authorization: "token " + userconfig.password
+                        }
+                    }).data;
+                    let res = data.map(e => e.name);
+
+                    inquirer.prompt([
+                        {
+                            type: "list",
+                            message: "Please choose a branch",
+                            choices: res,
+                            name: "branch"
+                        }
+                    ]).then(({ branch }) => {
+                        let clone_url = res.data.filter(repo => repo.name === e.repo)[0].clone_url;
+                        shell.exec(`git clone ${clone_url} . -q`);
+                        shell.exec(`git checkout ${branch}`)
+                    })
+                } catch (error) {
+                    console.log(error)
+                }
             }
         })
     } catch (error) {
