@@ -498,8 +498,8 @@ const init = async () => {
                             Accept: "application/vnd.github+json",
                             Authorization: "token " + userconfig.password
                         }
-                    }).data;
-                    let res = data.map(e => e.name);
+                    });
+                    let res = data.data.map(e => e.name);
 
                     inquirer.prompt([
                         {
