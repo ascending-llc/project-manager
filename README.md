@@ -2,6 +2,18 @@
 
 Project manager enabling users to keep data clean and organized, ensuring only one directory for code is needed.
 
+## **Directory**
+
+- [Installation](#installation)
+- [Getting Started](#getting-started)
+- [Configuration](#configuration)
+  - [Adding Profiles](#adding-a-new-profile)
+  - [Switching Profiles](#switching-between-profiles)
+  - [Resetting Config](#resetting-the-config-files)
+- [Adding custom templates](#adding-templates)
+  - [Questions](#questions)
+  - [File Templates](#file-templates)
+
 ## Usage
 
 ### **Installation**
@@ -16,9 +28,17 @@ npm i awspm -g
 npm i awspm --location=global
 ```
 
-## **Configuration**
+# **Getting Started**
 
-> ## Getting Started
+## **Using the CLI**
+
+Run below command to either start a new project or change to an existing one.
+
+```bash
+pm i
+```
+
+\* Running above command will delete all files in current directory
 
 ### Get a GitHub token
 
@@ -28,7 +48,7 @@ Go to [this website](https://docs.github.com/en/authentication/keeping-your-acco
 - Your token has Admin access to repo hooks
 - You have copied the token
 
-### CLI
+## **Configuration**
 
 Run below command and follow the steps:
 
@@ -37,6 +57,24 @@ pm config
 ```
 
 \* Please understand if you choose to be in an org any new project will be under that org.
+
+> ## Configuring on start commands
+
+Whenever you find that there are still some repetitive commands you have to run whenever opening a specific project (Ex: `npm i` or `npm run start:test`), consider adding on start commands.
+
+### To add on start commands run
+
+```bash
+pm c -r
+```
+
+### or
+
+```bash
+pm config --repo
+```
+
+\* Each command must be seperated by a semicolon `;`
 
 > ## Adding a new profile
 
@@ -146,7 +184,7 @@ pm a -t
 
 The variables key is extremely important so take your time deciding on one... whenever you've decided on one make sure to replace every spot where you would like to import user boilerplate code as the key.
 
-### **Questions**
+## **Questions**
 
 A question is the basis of Boilerplate templates, as it tells `awspm` where and what to put code.
 
@@ -214,7 +252,7 @@ When all is said and done each question should look a little like this.
 }
 ```
 
-### **File Templates**
+## **File Templates**
 
 These show up in Boilerplate Projects making it possible to import your own Boilerplate into a Boilerplate project all the time.
 
@@ -247,13 +285,3 @@ This one's pretty simple, just create a JSON file that when switched to YAML for
 Code templates are your default templates only to get a project up and running instead of to compliment an already existing one.
 
 \* We're in need of more templates so if you want your own added just send in a pr!
-
-### **Using the CLI**
-
-Run below command to either start a new repo or change repos to an existing one.
-
-```bash
-pm i
-```
-
-\* Running above command will delete all files in current directory

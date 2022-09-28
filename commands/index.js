@@ -269,7 +269,7 @@ const add = (opts) => {
 
 }
 
-const config = (opts) => {
+const config = async (opts) => {
     if (opts.profile) {
         let data = JSON.parse(fs.readFileSync(`${homedir()}/.awspm/userconfig.json`));
         if (data.profiles) {
@@ -302,6 +302,61 @@ const config = (opts) => {
         } else {
             shell.echo("Must have at least one extra profile.");
         }
+    } else if (opts.repo) {
+        if (!fs.existsSync(homedir() + "/.awspm")) {
+            shell.echo("Please run pm config to set up configuration files");
+            shell.exit();
+        }
+        let userdata = fs.readFileSync(homedir() + "/.awspm/userconfig.json");
+        let userconfig = JSON.parse(userdata);
+
+        shell.echo('Fetching repos');
+        let repo_link = `https://api.github.com/${userconfig.is_org === "Yes" ? `orgs/${userconfig.org}` : "user"}/repos`
+        let res = await axios.get(repo_link, {
+            headers: {
+                Accept: "application/vnd.github+json",
+                Authorization: "token " + userconfig.password
+            },
+            params: {
+                sort: "pushed"
+            }
+        })
+        let names = res.data.map(e => e.name);
+        inquirer.prompt([
+            {
+                type: "list",
+                name: "repo",
+                choices: [...names],
+                message: "Which repo would you like to add a config file for?"
+            },
+            {
+                message: "What commands would you like to add? (Seperate commands by a semicolon ;)",
+                name: "commands",
+                type: "input"
+            }
+        ]).then(e => {
+            try {
+                const { repo, commands } = e;
+                let cmds = commands.split(";");
+                let data;
+                if (fs.existsSync(homedir() + "/.awspm/commands.json")) {
+                    res = fs.readFileSync(`${homedir()}/.awspm/commands.json`);
+                    data = JSON.parse(res).push({ repo, cmds })
+                } else {
+                    data = [
+                        {
+                            repo,
+                            cmds
+                        }
+                    ]
+                }
+                fs.writeFileSync(`${homedir()}/.awspm/commands.json`, JSON.stringify(data));
+                shell.echo("Successfully imported commands")
+            } catch (error) {
+                shell.echo("Unexpected error!")
+                shell.echo(error)
+            }
+        }).catch(e => console.log(e))
     } else {
         shell.echo("The GitHub token must have Repo access as well as Hook access");
         inquirer.prompt([
@@ -512,6 +567,22 @@ const init = async () => {
                         let clone_url = res.data.filter(repo => repo.name === e.repo)[0].clone_url;
                         shell.exec(`git clone ${clone_url} . -q`);
                         shell.exec(`git checkout ${branch}`)
+                        if (fs.existsSync(`${homedir()}/.awspm/commands.json`)) {
+                            let cmds = JSON.parse(fs.readFileSync(`${homedir()}/.awspm/commands.json`));
+                            cmds.forEach(element => {
+                                if (element.repo === e.repo) {
+                                    shell.echo(`Executing commands for ${e.repo}`)
+                                    element.cmds.forEach(cmd => {
+                                        try {
+                                            shell.exec(cmd);
+                                        } catch (error) {
+                                            shell.echo(`Error executing ${cmd}`)
+                                            shell.echo(error)
+                                        }
+                                    });
+                                }
+                            });
+                        }
                     })
                 } catch (error) {
                     console.log(error)
