@@ -340,8 +340,17 @@ const config = async (opts) => {
                 let cmds = commands.split(";");
                 let data;
                 if (fs.existsSync(homedir() + "/.awspm/commands.json")) {
-                    res = fs.readFileSync(`${homedir()}/.awspm/commands.json`);
-                    data = JSON.parse(res).push({ repo, cmds })
+                    res = JSON.parse(fs.readFileSync(`${homedir()}/.awspm/commands.json`));
+                    let flag;
+                    res.forEach((e, i) => {
+                        if (e.repo === repo) flag = i
+                    });
+                    if (flag) {
+                        data = [...res];
+                        data[flag] = { repo, cmds }
+                    } else {
+                        data = [...res, { repo, cmds }]
+                    }
                 } else {
                     data = [
                         {
