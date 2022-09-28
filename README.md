@@ -7,6 +7,7 @@ Project manager enabling users to keep data clean and organized, ensuring only o
 - [Installation](#installation)
 - [Getting Started](#getting-started)
 - [Configuration](#configuration)
+  - [On start commands](#configuring-on-start-commands)
   - [Adding Profiles](#adding-a-new-profile)
   - [Switching Profiles](#switching-between-profiles)
   - [Resetting Config](#resetting-the-config-files)
