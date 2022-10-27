@@ -116,7 +116,7 @@ If any troubleshooting doesn't seem to work you may need to update your config f
 If you made any local templates or have any sensitive data back up your files... the config is found ~/.awspm
 
 ```bash
-pm config -r
+pm config --reset
 ```
 
 \* When resetting config files, you will also lose any local templates and profiles... please only do this as a last step
