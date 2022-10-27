@@ -57,7 +57,7 @@
           {
             "type": "file>yaml",
             "title": "Please choose the data for building and deploying",
-            "file": "pipeline.yaml",
+            "file": "frontend/pipeline.yaml",
             "name": "file",
             "line": 67
           }
