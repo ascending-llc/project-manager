@@ -11,7 +11,9 @@ program.command("add").description("Add a new GitHub template repo.").alias("a")
     commands.add(this.opts());
 });
 
-program.command("init").description("Create a new Repo and Project").alias("i").action(commands.init);
+program.command("init").description("Create a new Repo and Project").alias("i").option("-d, --depth [depth]", "depth of the folder structure").action(function() {
+    commands.init(this.opts());
+});
 
 program.command("config").description("Configure the project manager for you.").alias("c").option("-r, --repo").option("-a, --add").option("-p, --profile").option("-r, --reset").action(function () {
     commands.config(this.opts())

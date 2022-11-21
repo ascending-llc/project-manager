@@ -426,7 +426,16 @@ const config = async (opts) => {
     }
 }
 
-const init = async () => {
+const init = async (opts) => {
+    if (opts.depth && opts.depth >= 1) {
+        for (let i = 0; i < opts.depth; i++) {
+            shell.exec(`mkdir depth-${i}`)
+            shell.cd(`depth-${i}`)
+        }
+    } else if (opts.depth) {
+        shell.echo("Depth option must be at least 1")
+        shell.exit(1);
+    }
     try {
         if (!fs.existsSync(homedir() + "/.awspm")) {
             shell.echo("Please run pm config to set up configuration files");

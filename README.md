@@ -11,6 +11,7 @@ Project manager enabling users to keep data clean and organized, ensuring only o
   - [Adding Profiles](#adding-a-new-profile)
   - [Switching Profiles](#switching-between-profiles)
   - [Resetting Config](#resetting-the-config-files)
+  - [Folder Depth]()
 - [Adding custom templates](#adding-templates)
   - [Questions](#questions)
   - [File Templates](#file-templates)
@@ -286,3 +287,18 @@ This one's pretty simple, just create a JSON file that when switched to YAML for
 Code templates are your default templates only to get a project up and running instead of to compliment an already existing one.
 
 \* We're in need of more templates so if you want your own added just send in a pr!
+
+
+### **Folder Depth**
+
+To make sure a project is loaded at a specific folder depth, add the `depth` tag with the depth you would like
+
+```bash
+pm i -d {depth}
+```
+
+### or
+
+```bash
+pm init --depth {depth}
+```
