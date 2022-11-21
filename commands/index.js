@@ -516,40 +516,45 @@ const init = async () => {
             },
         ]).then(async e => {
             if (e.choice1 === "New") {
-                let post = code_templates.find(d => d.name === e.code_template).link;
-                let data = {
-                    "name": e.name,
-                    "description": e.desc,
-                    "private": e.is_private === "Private"
-                };
-                if (e.code_template === "Empty") {
-                    post = userconfig.is_org === "Yes" ? "https://api.github.com/orgs/" + userconfig.org + "/repos" : "https://api.github.com/user/repos";
-                } else {
-                    if (userconfig.is_org === "Yes") data["owner"] = userconfig.org;
-                }
-                let res = await axios.post(post, data, {
-                    headers: {
-                        Accept: "application/vnd.github+json",
-                        Authorization: "token " + userconfig.password
+                try {
+                    let post = e.code_template === "Empty" ? "Empty" : code_templates.find(d => d.name === e.code_template).link;
+                    let data = {
+                        "name": e.name,
+                        "description": e.desc,
+                        "private": e.is_private === "Private"
+                    };
+                    if (e.code_template === "Empty") {
+                        post = userconfig.is_org === "Yes" ? "https://api.github.com/orgs/" + userconfig.org + "/repos" : "https://api.github.com/user/repos";
+                    } else {
+                        if (userconfig.is_org === "Yes") data["owner"] = userconfig.org;
                     }
-                })
-                let repo_url = res.data.clone_url;
-
-                shell.echo("Creating and cloning repo...")
-
-                shell.exec("sleep 3")
-
-                shell.exec(`git clone ${repo_url} . -q`)
-
-                if (e.cloud_templates[0] !== "None") {
-                    for (const template in e.cloud_templates) {
-                        let template_name = e.cloud_templates[template];
-                        let cur_template = cloud_templates.find(e => e.name === template_name);
-
-                        shell.echo(`Cloning ${template}`);
-
-                        shell.exec(`git clone ${cur_template.link} . -s`)
-                    }
+                    let res = await axios.post(post, data, {
+                        headers: {
+                            Accept: "application/vnd.github+json",
+                            Authorization: "token " + userconfig.password
+                        }
+                    })
+                    let repo_url = res.data.clone_url;
+    
+                    shell.echo("Creating and cloning repo...")
+    
+                    shell.exec("sleep 3")
+    
+                    shell.exec(`git clone ${repo_url} . -q`)
+    
+                    if (e.cloud_templates[0] !== "None") {
+                        for (const template in e.cloud_templates) {
+                            let template_name = e.cloud_templates[template];
+                            let cur_template = cloud_templates.find(e => e.name === template_name);
+    
+                            shell.echo(`Cloning ${template}`);
+    
+                            shell.exec(`git clone ${cur_template.link} . -s`)
+                        }
+                    }   
+                } catch (error) {
+                    shell.echo("Encountered error while running command");
+                    shell.echo(`Error ${error}`)
                 }
             } else {
                 let repo = res.data.find(repo => repo.name === e.repo);
