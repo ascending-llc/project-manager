@@ -1,4 +1,4 @@
-#! /usr/bin/env node --no-warnings
+#! /usr/bin/env -S node --no-warnings
 import { Command } from "commander";
 import json from "../package.json" assert { type: "json" };
 import commands from "../commands/index.js";
