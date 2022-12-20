@@ -50,6 +50,8 @@ Go to [this website](https://docs.github.com/en/authentication/keeping-your-acco
 - Your token has Admin access to repo hooks
 - You have copied the token
 
+\* If using a GitHub fine-grained token, you must make sure any organization you work under explicitly allows them. 
+
 ## **Configuration**
 
 Run below command and follow the steps:

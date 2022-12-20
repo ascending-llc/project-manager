@@ -617,8 +617,48 @@ const init = async (opts) => {
     }
 }
 
+const git = async () => {
+    let status = shell.exec("git status -s")["stdout"];
+    let remote_url = shell.exec("git config --get remote.origin.url", { silent: true })["stdout"];
+    let repo = remote_url.split("/")[remote_url.split("/").length - 1].split(".")[0]
+    let status_list = status.split(/\r?\n|\r|\n/g)
+    status_list.pop()
+    inquirer.prompt([
+        {
+            type: "confirm",
+            message: `Would you like to these push changes to remote repo ${repo}?`,
+            name: 'confirm_status'
+        },
+        {
+            type: "checkbox",
+            message: "Which changes would you like to commit?",
+            name: "changes",
+            choices: status_list,
+            when: (e) => e.confirm_status === false
+        },
+        {
+            type: "input",
+            message: "What's the commit message?",
+            name: "commit_message"
+        },
+    ]).then(e => {
+        const { confirm_status, commit_message } = e;
+        if (confirm_status) {
+            shell.exec(`git commit -a -m "${commit_message}"`);
+            shell.exit();
+        }
+        const { changes } = e;
+        for (const change of changes) {
+            let file = change.slice(2)
+            shell.exec(`git add ${file}`)
+        }
+        shell.exec(`git commit -m "${commit_message}"`)
+    });
+}
+
 export default {
     add,
     config,
-    init
+    init,
+    git
 }

@@ -19,6 +19,10 @@ program.command("config").description("Configure the project manager for you.").
     commands.config(this.opts())
 });
 
+program.command("git").description("Run Common Git operations with one line").alias("g").action(function() {
+    commands.git(this.opts())
+})
+
 program.parse(process.argv);
 
 if (!program.args.length) {
