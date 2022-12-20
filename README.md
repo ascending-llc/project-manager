@@ -11,7 +11,7 @@ Project manager enabling users to keep data clean and organized, ensuring only o
   - [Adding Profiles](#adding-a-new-profile)
   - [Switching Profiles](#switching-between-profiles)
   - [Resetting Config](#resetting-the-config-files)
-  - [Folder Depth]()
+  - [Folder Depth](#folder-depth)
 - [Adding custom templates](#adding-templates)
   - [Questions](#questions)
   - [File Templates](#file-templates)
@@ -80,6 +80,8 @@ pm config --repo
 
 \* Each command must be seperated by a semicolon `;`
 
+
+
 > ## Adding a new profile
 
 Sometimes we may need multiple profiles and an easy way to switch across them. (Ex: Multiple GitHub accs, working with multiple orgs, or working with one org)
@@ -124,7 +126,25 @@ pm config --reset
 
 \* When resetting config files, you will also lose any local templates and profiles... please only do this as a last step
 
-> ## Adding Templates
+## **Git Operations**
+
+To push changes to a git repo run the command:
+
+```sh
+pm git
+```
+
+### or
+
+```sh
+pm g
+```
+
+If you would like to only commit specific files answer no to 
+
+`Would you like to these push changes to remote repo project-manager?`
+
+## **Adding Templates**
 
 This is where the AWSPM really starts to show off. There are 3 default templates for everyone. Of the three there are currently three different types of templates... Git Clone, Git Template, and Git Boilerplate.
 

@@ -645,6 +645,7 @@ const git = async () => {
         const { confirm_status, commit_message } = e;
         if (confirm_status) {
             shell.exec(`git commit -a -m "${commit_message}"`);
+            shell.exec("git push")
             shell.exit();
         }
         const { changes } = e;
@@ -653,6 +654,7 @@ const git = async () => {
             shell.exec(`git add ${file}`)
         }
         shell.exec(`git commit -m "${commit_message}"`)
+        shell.exec("git push")
     });
 }
 
