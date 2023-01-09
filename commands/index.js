@@ -442,7 +442,7 @@ const init = async (opts) => {
             shell.exit();
         }
         shell.echo(`Deleting old files`)
-        // shell.exec("find . -delete")
+        shell.exec("find . -delete")
 
         let data = fs.readFileSync(homedir() + "/.awspm/templates.json");
         let templates = JSON.parse(data);
@@ -544,9 +544,9 @@ const init = async (opts) => {
     
                     shell.echo("Creating and cloning repo...")
     
-                    // shell.exec("sleep 3")
+                    shell.exec("sleep 3")
     
-                    // shell.exec(`git clone ${repo_url} . -q`)
+                    shell.exec(`git clone ${repo_url} . -q`)
     
                     if (e.cloud_templates[0] !== "None") {
                         for (const template in e.cloud_templates) {
